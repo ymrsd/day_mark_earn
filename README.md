@@ -23,6 +23,15 @@ In development only, Auth.js uses a local fallback secret and rate/timer checks 
 6. Run `npm install`, `npm run db:generate`, and `npm run db:migrate`.
 7. Run `npm run dev` and open the printed local URL.
 
+## Deploying To Netlify
+
+1. Push this repository to GitHub, then import it in Netlify. The included `netlify.toml` configures the Next.js runtime, build command, and Node.js version.
+2. Add the production environment variables from `.env.example` in **Site configuration > Environment variables**. At minimum, set `DATABASE_URL`, `AUTH_SECRET`, `CLAIM_TOKEN_SECRET`, `AUDIT_HASH_SECRET`, and `BANK_DETAILS_ENCRYPTION_SECRET` to production values. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for production rate limiting. Add the ProxyCheck and hCaptcha values to enable paid viewing and reward claims.
+3. Create a PostgreSQL database reachable from Netlify Functions and apply the Prisma schema before using the app. This repository does not yet contain migration files, so initialize a new database once with `npx prisma db push` using its production `DATABASE_URL`. For later schema changes, create and check in Prisma migrations, then run `npx prisma migrate deploy` as a deployment step.
+4. Trigger a deploy. Netlify runs `prisma generate` as part of the build; it does not create or migrate the production database automatically.
+
+Keep all secrets in Netlify's environment-variable settings, never in committed files. Redeploy after changing build-time or `NEXT_PUBLIC_` variables.
+
 The earner queue shows only funded, admin-approved campaigns. A fresh database has no campaigns until an advertiser deposits funds, submits a campaign, and an admin approves it. `AD_NETWORK_FALLBACK_URL` and the optional provider URLs are outbound links only; network eligibility and payments are controlled by those providers and are not credited as Daymark rewards.
 
 ## Account Roles And Review
