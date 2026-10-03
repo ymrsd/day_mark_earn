@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #f1f2e8;
+  --ink-soft: #c6c9bd;
+  --paper: #101310;
+  --paper-deep: #181c17;
+  --lime: #ccf35a;
+  --lime-deep: #a5ce32;
+  --muted: #858b7e;
+  --line: rgba(255, 255, 255, .1);
+}
+
+@theme inline {
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: radial-gradient(rgba(255, 255, 255, .04) .65px, transparent .65px);
+  background-size: 8px 8px;
+  font-family: var(--font-geist-sans), sans-serif;
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+::selection { color: #101310; background: var(--lime); }
+
+.dashboard-main { min-height: 100vh; margin-left: 248px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.dashboard-grid > * { background: var(--paper); }
+.metric-value { font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.panel-rule { border-top: 1px solid var(--line); }
+
+@media (max-width: 760px) {
+  .dashboard-main { margin-left: 0; padding-bottom: 82px; }
+}

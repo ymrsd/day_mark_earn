@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  EARNER
+  ADVERTISER
+  ADMIN
+}
+
+enum CampaignStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  REJECTED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  EARNING
+  CAMPAIGN_SPEND
+}
+
+enum PaymentMethod {
+  CRYPTO_FAUCETPAY
+  PAYEER
+  MANUAL_BANK
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AdSessionStatus {
+  OPEN
+  CLAIMED
+  EXPIRED
+  REJECTED
+}
+
+enum OfferCategory {
+  GAME
+  APP
+  SURVEY
+  TASK
+}
+
+enum OfferStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  REJECTED
+}
+
+enum OfferCompletionStatus {
+  STARTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id                 String           @id @default(cuid())
+  email              String           @unique
+  passwordHash       String
+  role               UserRole         @default(EARNER)
+  balance            Decimal          @default(0) @db.Decimal(18, 8)
+  advertiserBalance  Decimal          @default(0) @db.Decimal(18, 8)
+  ipAddress          String?
+  deviceFingerprint  String?
+  isBanned           Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  campaigns          Campaign[]       @relation("AdvertiserCampaigns")
+  adViews            AdViewHistory[]
+  transactions       Transaction[]
+  adSessions         AdSession[]
+  offers             RewardOffer[]    @relation("AdvertiserOffers")
+  offerCompletions   OfferCompletion[]
+  fraudAlerts        FraudAlert[]
+}
+
+model Campaign {
+  id               String          @id @default(cuid())
+  advertiserId     String
+  title            String
+  targetUrl        String
+  durationSeconds  Int
+  rewardPerView    Decimal         @db.Decimal(18, 8)
+  costPerView      Decimal         @db.Decimal(18, 8)
+  totalBudget      Decimal         @db.Decimal(18, 8)
+  remainingBudget  Decimal         @db.Decimal(18, 8)
+  requestedViews   Int
+  servedViews      Int             @default(0)
+  status           CampaignStatus @default(PENDING)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  advertiser       User            @relation("AdvertiserCampaigns", fields: [advertiserId], references: [id], onDelete: Cascade)
+  adViews          AdViewHistory[]
+  adSessions       AdSession[]
+
+  @@index([status, remainingBudget])
+  @@index([advertiserId, createdAt])
+}
+
+model AdViewHistory {
+  id                  String   @id @default(cuid())
+  userId              String
+  campaignId          String
+  rewardAmount        Decimal  @db.Decimal(18, 8)
+  ipAddress           String
+  deviceFingerprint   String?
+  claimDate           DateTime @db.Date
+  verifiedAt          DateTime @default(now())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign            Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId, claimDate])
+  @@index([ipAddress, verifiedAt])
+}
+
+model Transaction {
+  id            String            @id @default(cuid())
+  userId        String
+  amount        Decimal           @db.Decimal(18, 8)
+  type          TransactionType
+  paymentMethod PaymentMethod?
+  status        TransactionStatus @default(PENDING)
+  txHash        String?
+  referenceId   String?
+  walletAddress String?
+  bankDetailsEncrypted String?
+  bankAccountHolder String?
+  bankName      String?
+  bankBranch    String?
+  bankAccountNumber String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, type, createdAt])
+  @@index([userId, createdAt])
+}
+
+model AdSession {
+  id                 String           @id
+  userId             String
+  campaignId         String
+  deviceFingerprint  String?
+  startTime          DateTime         @default(now())
+  expiresAt          DateTime
+  status             AdSessionStatus  @default(OPEN)
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign           Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, expiresAt])
+}
+
+model RewardOffer {
+  id                  String       @id @default(cuid())
+  advertiserId        String
+  providerName        String       @default("DIRECT")
+  providerOfferId     String?
+  category            OfferCategory
+  title               String
+  description         String
+  instructions        String
+  destinationUrl      String
+  rewardAmount        Decimal      @db.Decimal(18, 8)
+  totalBudget         Decimal      @db.Decimal(18, 8)
+  remainingBudget     Decimal      @db.Decimal(18, 8)
+  requestedCompletions Int
+  completedCount      Int          @default(0)
+  evidenceRequired    Boolean      @default(true)
+  status              OfferStatus  @default(PENDING)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  advertiser          User         @relation("AdvertiserOffers", fields: [advertiserId], references: [id], onDelete: Cascade)
+  completions         OfferCompletion[]
+
+  @@unique([providerName, providerOfferId])
+  @@index([status, category, remainingBudget])
+  @@index([advertiserId, createdAt])
+}
+
+model OfferCompletion {
+  id                 String                @id @default(cuid())
+  userId             String
+  offerId            String
+  status             OfferCompletionStatus @default(STARTED)
+  rewardAmount       Decimal               @db.Decimal(18, 8)
+  externalClickId    String                @unique @default(cuid())
+  providerEventId    String?               @unique
+  ipAddress          String?
+  deviceFingerprint   String?
+  evidenceUrl        String?
+  proofNote          String?
+  reviewNote         String?
+  startedAt          DateTime              @default(now())
+  submittedAt        DateTime?
+  reviewedAt         DateTime?
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer              RewardOffer           @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, offerId])
+  @@index([status, submittedAt])
+  @@index([userId, startedAt])
+}
+
+model FraudAlert {
+  id          String   @id @default(cuid())
+  userId      String?
+  reason      String
+  ipAddress   String?
+  details     Json?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([resolvedAt, createdAt])
+  @@index([ipAddress, createdAt])
+}
