@@ -1,9 +1,10 @@
 import { OfferStatus, UserRole } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import { getClientCountry } from "@/lib/ad-availability";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return Response.json({ error: "Authentication required." }, { status: 401 });
@@ -14,8 +15,10 @@ export async function GET() {
       return Response.json({ error: "Too many requests. Try again shortly." }, { status: 429 });
     }
 
+    const country = getClientCountry(request);
+    const targetCountryFilters = [{ targetCountries: { isEmpty: true } }, ...(country ? [{ targetCountries: { has: country } }] : [])];
     const offers = await prisma.rewardOffer.findMany({
-      where: { status: OfferStatus.ACTIVE, remainingBudget: { gt: 0 } },
+      where: { status: OfferStatus.ACTIVE, remainingBudget: { gt: 0 }, OR: targetCountryFilters },
       orderBy: [{ category: "asc" }, { rewardAmount: "desc" }],
       take: 100,
       select: {
@@ -24,6 +27,7 @@ export async function GET() {
         title: true,
         description: true,
         instructions: true,
+        targetCountries: true,
         rewardAmount: true,
         requestedCompletions: true,
         completedCount: true,

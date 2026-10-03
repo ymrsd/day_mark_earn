@@ -11,6 +11,7 @@ const schema = z.object({
   destinationUrl: z.string().url().max(2048),
   rewardAmount: z.number().min(0.01).max(100),
   requestedCompletions: z.number().int().min(1).max(10000),
+  targetCountries: z.array(z.string().regex(/^[A-Z]{2}$/)).max(50).default([]),
   evidenceRequired: z.boolean().default(true),
 });
 
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
 
     const rewardAmount = new Prisma.Decimal(body.data.rewardAmount.toFixed(8));
     const totalBudget = rewardAmount.mul(body.data.requestedCompletions);
+    const targetCountries = [...new Set(body.data.targetCountries)];
     const offer = await prisma.$transaction(async (tx) => {
       const debited = await tx.user.updateMany({
         where: { id: advertiserId, role: UserRole.ADVERTISER, advertiserBalance: { gte: totalBudget } },
@@ -46,6 +48,7 @@ export async function POST(request: Request) {
           description: body.data.description,
           instructions: body.data.instructions,
           destinationUrl: url.toString(),
+          targetCountries,
           rewardAmount,
           totalBudget,
           remainingBudget: totalBudget,

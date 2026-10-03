@@ -176,6 +176,7 @@ model RewardOffer {
   description         String
   instructions        String
   destinationUrl      String
+  targetCountries     String[]     @default([])
   rewardAmount        Decimal      @db.Decimal(18, 8)
   totalBudget         Decimal      @db.Decimal(18, 8)
   remainingBudget     Decimal      @db.Decimal(18, 8)

@@ -31,7 +31,7 @@ export async function GET() {
       ORDER BY COUNT(DISTINCT "userId") DESC
       LIMIT 20
     `,
-    prisma.rewardOffer.findMany({ where: { status: OfferStatus.PENDING }, orderBy: { createdAt: "asc" }, take: 20, select: { id: true, title: true, category: true, description: true, instructions: true, destinationUrl: true, rewardAmount: true, totalBudget: true, requestedCompletions: true, createdAt: true, advertiser: { select: { email: true } } } }),
+    prisma.rewardOffer.findMany({ where: { status: OfferStatus.PENDING }, orderBy: { createdAt: "asc" }, take: 20, select: { id: true, title: true, category: true, description: true, instructions: true, destinationUrl: true, targetCountries: true, rewardAmount: true, totalBudget: true, requestedCompletions: true, createdAt: true, advertiser: { select: { email: true } } } }),
     prisma.offerCompletion.findMany({ where: { status: OfferCompletionStatus.PENDING }, orderBy: { submittedAt: "asc" }, take: 30, select: { id: true, userId: true, offerId: true, rewardAmount: true, evidenceUrl: true, proofNote: true, submittedAt: true, ipAddress: true, user: { select: { email: true } }, offer: { select: { title: true, category: true, advertiser: { select: { email: true } } } } } }),
   ]);
 

@@ -15,7 +15,7 @@ export default async function AdvertiserPage() {
     prisma.user.findUnique({ where: { id: session.user.id }, select: { advertiserBalance: true } }),
     prisma.campaign.findMany({ where: { advertiserId: session.user.id }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, title: true, status: true, requestedViews: true, servedViews: true, totalBudget: true, remainingBudget: true, durationSeconds: true, createdAt: true } }),
     prisma.campaign.aggregate({ where: { advertiserId: session.user.id }, _sum: { servedViews: true, totalBudget: true } }),
-    prisma.rewardOffer.findMany({ where: { advertiserId: session.user.id }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, title: true, category: true, status: true, rewardAmount: true, totalBudget: true, remainingBudget: true, requestedCompletions: true, completedCount: true, createdAt: true } }),
+    prisma.rewardOffer.findMany({ where: { advertiserId: session.user.id }, orderBy: { createdAt: "desc" }, take: 20, select: { id: true, title: true, category: true, status: true, targetCountries: true, rewardAmount: true, totalBudget: true, remainingBudget: true, requestedCompletions: true, completedCount: true, createdAt: true } }),
   ]);
 
   const campaignData = campaigns.map((campaign) => ({ ...campaign, totalBudget: campaign.totalBudget.toString(), remainingBudget: campaign.remainingBudget.toString(), createdAt: campaign.createdAt.toISOString() }));

@@ -50,6 +50,10 @@ Advertisers can submit funded game, app-install/use, survey, and task offers fro
 
 Offerwall provider APIs and automated server-to-server callbacks are not connected yet. `providerName` and click references are stored to support that integration later. Until then, offers use direct advertiser destinations and manual proof review. Use external game/app networks only if their terms explicitly allow incentivized traffic; their payout is not automatically a Daymark balance reward.
 
+Offers are worldwide by default. Advertisers may optionally enter comma-separated ISO 3166-1 alpha-2 country codes (for example, `LK, IN`). Catalog and offer-start APIs match those codes against Cloudflare `CF-IPCountry` or Vercel `x-vercel-ip-country` headers; unknown locations receive worldwide offers only. Country targeting does not create provider inventory or guarantee a country has funded offers.
+
+See [PROVIDER_INTEGRATION.md](PROVIDER_INTEGRATION.md) for provider options, approval requirements, hosting considerations, and the manual steps needed before live network inventory can appear.
+
 ## Security Notes
 
 - Claim tokens are signed, bound to user/campaign/session IDs, and expire shortly after the required viewing duration.

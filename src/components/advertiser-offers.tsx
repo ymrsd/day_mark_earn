@@ -8,6 +8,7 @@ type Offer = {
   title: string;
   category: string;
   status: string;
+  targetCountries: string[];
   rewardAmount: string;
   totalBudget: string;
   remainingBudget: string;
@@ -23,6 +24,7 @@ export function AdvertiserOffers({ initialOffers }: { initialOffers: Offer[] }) 
   const [description, setDescription] = useState("");
   const [instructions, setInstructions] = useState("");
   const [destinationUrl, setDestinationUrl] = useState("");
+  const [targetCountriesInput, setTargetCountriesInput] = useState("");
   const [rewardAmount, setRewardAmount] = useState("0.10");
   const [requestedCompletions, setRequestedCompletions] = useState("100");
   const [evidenceRequired, setEvidenceRequired] = useState(true);
@@ -38,7 +40,7 @@ export function AdvertiserOffers({ initialOffers }: { initialOffers: Offer[] }) 
       const response = await fetch("/api/advertiser/offers", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ category, title, description, instructions, destinationUrl, rewardAmount: Number(rewardAmount), requestedCompletions: Number(requestedCompletions), evidenceRequired }),
+        body: JSON.stringify({ category, title, description, instructions, destinationUrl, rewardAmount: Number(rewardAmount), requestedCompletions: Number(requestedCompletions), targetCountries: [...new Set(targetCountriesInput.split(",").map((country) => country.trim().toUpperCase()).filter(Boolean))], evidenceRequired }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Offer could not be submitted.");
@@ -47,6 +49,7 @@ export function AdvertiserOffers({ initialOffers }: { initialOffers: Offer[] }) 
       setDescription("");
       setInstructions("");
       setDestinationUrl("");
+      setTargetCountriesInput("");
       setMessage("Budget reserved. The offer is waiting for admin approval.");
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : "Offer could not be submitted.");
@@ -68,6 +71,7 @@ export function AdvertiserOffers({ initialOffers }: { initialOffers: Offer[] }) 
             <label className="block text-xs text-white/50 sm:col-span-2">Short description<input required minLength={10} maxLength={300} value={description} onChange={(event) => setDescription(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-[#ccf35a]/50" placeholder="Tell earners what the offer is about" /></label>
             <label className="block text-xs text-white/50 sm:col-span-2">Completion instructions<textarea required minLength={10} maxLength={2000} rows={4} value={instructions} onChange={(event) => setInstructions(event.target.value)} className="mt-1.5 w-full resize-y rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none focus:border-[#ccf35a]/50" placeholder="Steps and exact completion conditions" /></label>
             <label className="block text-xs text-white/50 sm:col-span-2">Destination URL<input required type="url" value={destinationUrl} onChange={(event) => setDestinationUrl(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-[#ccf35a]/50" placeholder="https://..." /></label>
+            <label className="block text-xs text-white/50 sm:col-span-2">Target countries (optional)<input value={targetCountriesInput} onChange={(event) => setTargetCountriesInput(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-[#ccf35a]/50" placeholder="Leave blank for worldwide, or enter codes like LK, IN" /><span className="mt-1 block text-[10px] text-white/35">Use ISO 3166-1 alpha-2 codes, comma-separated. Unknown visitor location only sees worldwide offers.</span></label>
             <label className="block text-xs text-white/50">Available completions<input required type="number" min="1" max="10000" step="1" value={requestedCompletions} onChange={(event) => setRequestedCompletions(event.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-[#ccf35a]/50" /></label>
             <label className="flex items-center gap-2 self-end pb-2 text-xs text-white/55"><input type="checkbox" checked={evidenceRequired} onChange={(event) => setEvidenceRequired(event.target.checked)} className="size-4 accent-[#ccf35a]" />Require evidence link</label>
           </div>
@@ -77,7 +81,7 @@ export function AdvertiserOffers({ initialOffers }: { initialOffers: Offer[] }) 
 
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium"><Gamepad2 size={17} className="text-[#ccf35a]" />Your offers</div>
-          {offers.length ? offers.map((offer) => <article key={offer.id} className="rounded-xl border border-white/10 bg-[#181c17] p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-medium">{offer.title}</h3><p className="mt-1 text-[10px] uppercase tracking-wider text-white/35">{offer.category.toLowerCase()} · ${offer.rewardAmount} each</p></div><StatusBadge status={offer.status} /></div><div className="mt-4 flex justify-between border-t border-white/[.08] pt-3 text-xs text-white/45"><span>{offer.completedCount} / {offer.requestedCompletions} completed</span><span className="font-mono text-white/65">${offer.remainingBudget} left</span></div></article>) : <p className="rounded-xl border border-white/10 bg-[#181c17] p-5 text-sm text-white/40">No game or app offers submitted.</p>}
+          {offers.length ? offers.map((offer) => <article key={offer.id} className="rounded-xl border border-white/10 bg-[#181c17] p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="truncate text-sm font-medium">{offer.title}</h3><p className="mt-1 text-[10px] uppercase tracking-wider text-white/35">{offer.category.toLowerCase()} · ${offer.rewardAmount} each · {offer.targetCountries.length ? offer.targetCountries.join(", ") : "Worldwide"}</p></div><StatusBadge status={offer.status} /></div><div className="mt-4 flex justify-between border-t border-white/[.08] pt-3 text-xs text-white/45"><span>{offer.completedCount} / {offer.requestedCompletions} completed</span><span className="font-mono text-white/65">${offer.remainingBudget} left</span></div></article>) : <p className="rounded-xl border border-white/10 bg-[#181c17] p-5 text-sm text-white/40">No game or app offers submitted.</p>}
         </div>
       </div>
     </section>

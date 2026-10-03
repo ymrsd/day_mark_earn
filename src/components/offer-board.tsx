@@ -13,6 +13,7 @@ type Offer = {
   title: string;
   description: string;
   instructions: string;
+  targetCountries: string[];
   rewardAmount: string;
   requestedCompletions: number;
   completedCount: number;
@@ -132,7 +133,7 @@ function OfferCard({ offer, onUpdate }: { offer: Offer; onUpdate: (offerId: stri
     <article className="rounded-xl border border-white/10 bg-[#181c17] p-5">
       <div className="flex items-start gap-3">
         <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#ccf35a]/10 text-[#ccf35a]"><Icon size={19} /></div>
-        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-[10px] uppercase tracking-[.14em] text-white/40">{offer.category.toLowerCase()} · {offer.providerName}</span>{completion && <CompletionBadge status={completion.status} />}</div><h2 className="mt-1 font-semibold">{offer.title}</h2><p className="mt-2 text-sm leading-5 text-white/50">{offer.description}</p></div>
+        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-[10px] uppercase tracking-[.14em] text-white/40">{offer.category.toLowerCase()} · {offer.providerName} · {offer.targetCountries.length ? offer.targetCountries.join(", ") : "Worldwide"}</span>{completion && <CompletionBadge status={completion.status} />}</div><h2 className="mt-1 font-semibold">{offer.title}</h2><p className="mt-2 text-sm leading-5 text-white/50">{offer.description}</p></div>
         <div className="shrink-0 text-right"><span className="block text-[10px] uppercase tracking-wider text-white/35">Reward</span><span className="mt-1 block font-mono text-sm text-[#ccf35a]">${offer.rewardAmount}</span></div>
       </div>
 

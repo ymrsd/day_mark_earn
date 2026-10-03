@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { OfferStatus, UserRole } from "@prisma/client";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { getClientCountry } from "@/lib/ad-availability";
 import { getClientIp, hashSignal, isProxy } from "@/lib/fraud-checks";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rate-limit";
@@ -30,8 +31,10 @@ export async function POST(request: Request, context: RouteContext<"/api/offers/
     }
 
     const { offerId } = await context.params;
+    const country = getClientCountry(request);
+    const targetCountryFilters = [{ targetCountries: { isEmpty: true } }, ...(country ? [{ targetCountries: { has: country } }] : [])];
     const offer = await prisma.rewardOffer.findFirst({
-      where: { id: offerId, status: OfferStatus.ACTIVE, remainingBudget: { gte: 0.01 } },
+      where: { id: offerId, status: OfferStatus.ACTIVE, remainingBudget: { gte: 0.01 }, OR: targetCountryFilters },
       select: { id: true, destinationUrl: true, rewardAmount: true },
     });
     if (!offer) return Response.json({ error: "This offer is no longer available." }, { status: 404 });

@@ -9,6 +9,11 @@ export type ExternalNetwork = {
   url: string;
 };
 
+export function getClientCountry(request: Request) {
+  const country = (request.headers.get("cf-ipcountry") ?? request.headers.get("x-vercel-ip-country") ?? "").trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(country) && country !== "XX" ? country : null;
+}
+
 export function getAdSetupIssues(): AdSetupIssue[] {
   const issues: AdSetupIssue[] = [];
 
